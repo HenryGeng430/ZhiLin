@@ -1,0 +1,143 @@
+{
+  "format": "zhilin.private-db",
+  "formatVersion": 1,
+  "kind": "private-database",
+  "exportedAt": "2026-01-01T00:00:00",
+  "application": {
+    "name": "ZhiLin UI Framework",
+    "edition": "synthetic-sample",
+    "dataModel": "course-tree-v1"
+  },
+  "account": {
+    "uid": "framework-demo",
+    "username": "framework-demo",
+    "name": "只读框架示例"
+  },
+  "exclusions": {
+    "demoCourses": false,
+    "secrets": true,
+    "runtimeLogs": true,
+    "originalBinaryFiles": true
+  },
+  "summary": {
+    "courseCount": 1,
+    "nodeCount": 4
+  },
+  "settings": {},
+  "courses": [
+    {
+      "course": {
+        "id": "demo-reading",
+        "name": "示例：如何阅读一篇论文",
+        "intro": "这是仓库内置的合成示例数据，仅用于演示只读知识树与卡片。",
+        "color": "#2F7D73",
+        "authoritySource": "TEXTBOOK",
+        "kbVersion": 1,
+        "kbStatus": "READY",
+        "createdAt": "2026-01-01T00:00:00"
+      },
+      "nodes": [
+        {
+          "id": "demo-reading-root",
+          "name": "阅读论文的整体框架",
+          "summary": "先判断论文要解决什么问题，再看它如何论证，最后检查证据与边界。",
+          "nature": "TRUNK",
+          "parentId": null,
+          "prerequisiteIds": [],
+          "parallelIds": [],
+          "tags": ["阅读方法", "框架"],
+          "difficulty": 1,
+          "estimatedMinutes": 8,
+          "bodyMd": "## 一句话\n读论文不是从第一行读到最后一行，而是先建立问题、方法、证据和结论之间的对应关系。\n\n## 三个入口\n- **问题**：作者认为什么还没有被解决？\n- **方法**：作者用什么办法回答这个问题？\n- **证据**：结果是否足以支持结论？\n\n## 阅读顺序\n先读标题、摘要和图表，再回到引言与结论，最后检查方法和限制。",
+          "sourceRefs": [
+            {
+              "sid": "S1",
+              "docType": "TEXTBOOK",
+              "docName": "合成示例资料",
+              "locatorText": "合成示例资料 › 第 1 节",
+              "quote": "先建立问题、方法、证据和结论之间的对应关系。",
+              "description": "合成示例引用"
+            }
+          ],
+          "isImportant": true,
+          "confidence": 0.95
+        },
+        {
+          "id": "demo-reading-question",
+          "name": "识别研究问题",
+          "summary": "从摘要、引言和图表标题中提炼作者真正想回答的问题。",
+          "nature": "BRANCH",
+          "parentId": "demo-reading-root",
+          "prerequisiteIds": [],
+          "parallelIds": ["demo-reading-evidence"],
+          "tags": ["问题", "摘要"],
+          "difficulty": 2,
+          "estimatedMinutes": 10,
+          "bodyMd": "## 什么是研究问题\n研究问题是作者希望在论文结束时回答的那一个问题。它通常出现在摘要和引言的最后一段。\n\n## 练习\n读完摘要后，用一句话写出“作者想知道……”。如果写不出来，先看图表标题和结论。",
+          "sourceRefs": [
+            {
+              "sid": "S1",
+              "docType": "TEXTBOOK",
+              "docName": "合成示例资料",
+              "locatorText": "合成示例资料 › 第 2 节",
+              "quote": "研究问题通常出现在摘要和引言的最后一段。",
+              "description": "合成示例引用"
+            }
+          ],
+          "isImportant": false,
+          "confidence": 0.9
+        },
+        {
+          "id": "demo-reading-evidence",
+          "name": "检查证据与限制",
+          "summary": "区分作者的结论、支持结论的数据，以及作者没有覆盖的边界。",
+          "nature": "BRANCH",
+          "parentId": "demo-reading-root",
+          "prerequisiteIds": ["demo-reading-question"],
+          "parallelIds": [],
+          "tags": ["证据", "限制"],
+          "difficulty": 3,
+          "estimatedMinutes": 12,
+          "bodyMd": "## 三个问题\n1. 结论是什么？\n2. 哪些图表或实验支持它？\n3. 作者承认了哪些限制？\n\n## 常见误区\n把“作者说”当成“已经证明”。只读框架不判断证据质量，读者仍需自己核对原文。",
+          "sourceRefs": [
+            {
+              "sid": "S1",
+              "docType": "TEXTBOOK",
+              "docName": "合成示例资料",
+              "locatorText": "合成示例资料 › 第 3 节",
+              "quote": "区分结论、支持结论的数据，以及没有覆盖的边界。",
+              "description": "合成示例引用"
+            }
+          ],
+          "isImportant": true,
+          "confidence": 0.88
+        },
+        {
+          "id": "demo-reading-note",
+          "name": "做一页阅读笔记",
+          "summary": "把问题、方法、证据和结论压缩成一页，方便以后复习。",
+          "nature": "LEAF",
+          "parentId": "demo-reading-question",
+          "prerequisiteIds": [],
+          "parallelIds": [],
+          "tags": ["笔记", "复习"],
+          "difficulty": 2,
+          "estimatedMinutes": 9,
+          "bodyMd": "## 一页笔记模板\n- 问题：\n- 方法：\n- 关键证据：\n- 结论：\n- 我还想知道：\n\n只读框架不会保存你的编辑；这个模板只用于展示卡片排版。",
+          "sourceRefs": [],
+          "isImportant": false,
+          "confidence": 0.86
+        }
+      ],
+      "documents": [],
+      "issues": [],
+      "sourceTexts": [],
+      "learning": {
+        "demo-reading-root": { "status": "LEARNED", "mastery": 60 },
+        "demo-reading-question": { "status": "LEARNED", "mastery": 52 },
+        "demo-reading-evidence": { "status": "NEW", "mastery": 0 },
+        "demo-reading-note": { "status": "NEW", "mastery": 0 }
+      }
+    }
+  ]
+}
