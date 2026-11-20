@@ -2,7 +2,7 @@
 
 知林的**只读 UI 框架**。本仓库只包含页面壳、基础导入解析和知识卡只读浏览，不是一个可复现的完整产品。
 
-在线预览：<https://henrygeng430.github.io/ZhiLin-Framework/>
+在线预览：<https://henrygeng430.github.io/ZhiLin/>
 
 ## 能做什么
 
