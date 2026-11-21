@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from cola_skeleton.common.errors import DemoError
 from cola_skeleton.domain.model import Note
@@ -10,14 +10,14 @@ from cola_skeleton.domain.ports import NoteRepository
 
 
 def _now() -> str:
-    return datetime.now(timezone.utc).isoformat(timespec="seconds")
+    return datetime.now(UTC).isoformat(timespec="seconds")
 
 
 class NoteService:
     def __init__(self, repository: NoteRepository) -> None:
         self._repository = repository
 
-    def create(self, title: str, body: str = "") -> Note:
+    def create(self, title: str | None, body: str = "") -> Note:
         title = str(title or "").strip()
         if not title:
             raise DemoError("INVALID_ARGUMENT", "title is required", 400)
@@ -46,7 +46,7 @@ class NoteService:
         if not self._repository.delete(note_id):
             raise DemoError("NOT_FOUND", "note not found", 404)
 
-    def list(self, limit: int = 20, offset: int = 0) -> list[Note]:
+    def list(self, limit: int | str = 20, offset: int | str = 0) -> list[Note]:
         try:
             limit = max(1, min(100, int(limit)))
             offset = max(0, int(offset))

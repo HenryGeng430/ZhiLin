@@ -12,14 +12,14 @@ class Note:
     created_at: str = ""
     updated_at: str = ""
 
-    def rename(self, title: str, updated_at: str = "") -> "Note":
+    def rename(self, title: str, updated_at: str = "") -> Note:
         title = title.strip()
         if not title:
             raise ValueError("title is required")
         return replace(self, title=title[:120], updated_at=updated_at or self.updated_at)
 
     def edit(self, title: str | None = None, body: str | None = None,
-             updated_at: str = "") -> "Note":
+             updated_at: str = "") -> Note:
         title = self.title if title is None else str(title).strip()[:120]
         if not title:
             raise ValueError("title is required")

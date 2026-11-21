@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import re
 from dataclasses import asdict
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 
 from cola_skeleton.application.use_cases import NoteService
@@ -35,7 +35,7 @@ class NoteRouter:
             if method == "GET" and path == "/api/v1/health":
                 return 200, ok({
                     "status": "UP",
-                    "time": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+                    "time": datetime.now(UTC).isoformat(timespec="seconds"),
                 })
             if path == "/api/v1/notes":
                 if method == "GET":

@@ -9,6 +9,7 @@ business logic, prompts, course model, mastery policy or quota rules.
 from __future__ import annotations
 
 import argparse
+import contextlib
 import json
 import os
 import sys
@@ -29,7 +30,8 @@ class Handler(BaseHTTPRequestHandler):
 
     def log_message(self, fmt: str, *args: object) -> None:
         if os.environ.get("DEMO_VERBOSE"):
-            sys.stderr.write("%s - %s\n" % (self.address_string(), fmt % args))
+            message = fmt % args
+            sys.stderr.write(f"{self.address_string()} - {message}\n")
 
     def _cors(self) -> None:
         self.send_header("Access-Control-Allow-Origin", "*")
@@ -45,10 +47,8 @@ class Handler(BaseHTTPRequestHandler):
         self.send_header("X-Content-Type-Options", "nosniff")
         self._cors()
         self.end_headers()
-        try:
+        with contextlib.suppress(BrokenPipeError, ConnectionResetError):
             self.wfile.write(data)
-        except (BrokenPipeError, ConnectionResetError):
-            pass
 
     def _handle(self, method: str) -> None:
         parsed = urllib.parse.urlparse(self.path)
