@@ -4,7 +4,11 @@ ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1
 
 WORKDIR /app
-COPY . /app
+
+COPY pyproject.toml README.md ./
+COPY src ./src
+RUN python -m pip install --no-cache-dir .
 
 EXPOSE 8098
-CMD ["python", "server.py", "--host", "0.0.0.0", "--port", "8098", "--db", "/data/notes.db"]
+
+CMD ["python", "-m", "cola_skeleton.server", "--host", "0.0.0.0", "--port", "8098", "--db", "/data/notes.db"]

@@ -1,9 +1,9 @@
-"""Public COLA skeleton HTTP server (standard library only).
+"""Composition root and standard-library HTTP transport.
 
 Run:
-    python server.py --port 8098 --db ./notes.db
+    python -m cola_skeleton.server --port 8098 --db ./notes.db
 
-This is a generic Note CRUD demo. It intentionally contains no ZhiLin
+This is a generic Note CRUD demo. It intentionally contains no product
 business logic, prompts, course model, mastery policy or quota rules.
 """
 from __future__ import annotations
@@ -14,30 +14,29 @@ import os
 import sys
 import urllib.parse
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from typing import Any
 
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-
-from adapter.http import make_router  # noqa: E402
-from application.use_cases import NoteService  # noqa: E402
-from common.result import err  # noqa: E402
-from infrastructure.sqlite import SqliteNoteRepository  # noqa: E402
+from cola_skeleton.adapter.http import NoteRouter, make_router
+from cola_skeleton.application.use_cases import NoteService
+from cola_skeleton.common.result import err
+from cola_skeleton.infrastructure.sqlite import SqliteNoteRepository
 
 
 class Handler(BaseHTTPRequestHandler):
     server_version = "ZhiLinColaDemo/1.0"
     protocol_version = "HTTP/1.1"
-    router = None
+    router: NoteRouter | None = None
 
-    def log_message(self, fmt, *args):
+    def log_message(self, fmt: str, *args: object) -> None:
         if os.environ.get("DEMO_VERBOSE"):
             sys.stderr.write("%s - %s\n" % (self.address_string(), fmt % args))
 
-    def _cors(self):
+    def _cors(self) -> None:
         self.send_header("Access-Control-Allow-Origin", "*")
         self.send_header("Access-Control-Allow-Methods", "GET,POST,PATCH,DELETE,OPTIONS")
         self.send_header("Access-Control-Allow-Headers", "Content-Type,Accept")
 
-    def _send(self, status: int, payload: dict):
+    def _send(self, status: int, payload: dict[str, Any]) -> None:
         data = json.dumps(payload, ensure_ascii=False).encode("utf-8")
         self.send_response(status)
         self.send_header("Content-Type", "application/json; charset=utf-8")
@@ -51,11 +50,11 @@ class Handler(BaseHTTPRequestHandler):
         except (BrokenPipeError, ConnectionResetError):
             pass
 
-    def _handle(self, method: str):
+    def _handle(self, method: str) -> None:
         parsed = urllib.parse.urlparse(self.path)
         path = urllib.parse.unquote(parsed.path)
         query = {k: v[0] for k, v in urllib.parse.parse_qs(parsed.query).items()}
-        body = {}
+        body: dict[str, Any] = {}
         length = int(self.headers.get("Content-Length") or 0)
         if length:
             if length > 1024 * 1024:
@@ -67,25 +66,27 @@ class Handler(BaseHTTPRequestHandler):
                 return self._send(400, err("INVALID_JSON", "invalid JSON body"))
             if not isinstance(body, dict):
                 return self._send(400, err("INVALID_JSON", "body must be an object"))
+        if self.router is None:
+            return self._send(500, err("NOT_READY", "router is not configured"))
         status, payload = self.router.dispatch(method, path, query, body)
         return self._send(status, payload)
 
-    def do_OPTIONS(self):
+    def do_OPTIONS(self) -> None:
         self.send_response(204)
         self.send_header("Content-Length", "0")
         self._cors()
         self.end_headers()
 
-    def do_GET(self):
+    def do_GET(self) -> None:
         self._handle("GET")
 
-    def do_POST(self):
+    def do_POST(self) -> None:
         self._handle("POST")
 
-    def do_PATCH(self):
+    def do_PATCH(self) -> None:
         self._handle("PATCH")
 
-    def do_DELETE(self):
+    def do_DELETE(self) -> None:
         self._handle("DELETE")
 
 

@@ -4,9 +4,9 @@ from __future__ import annotations
 import uuid
 from datetime import datetime, timezone
 
-from common.errors import DemoError
-from domain.model import Note
-from domain.ports import NoteRepository
+from cola_skeleton.common.errors import DemoError
+from cola_skeleton.domain.model import Note
+from cola_skeleton.domain.ports import NoteRepository
 
 
 def _now() -> str:

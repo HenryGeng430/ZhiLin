@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from typing import Protocol
 
-from domain.model import Note
+from cola_skeleton.domain.model import Note
 
 
 class NoteRepository(Protocol):

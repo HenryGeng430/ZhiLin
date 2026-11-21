@@ -1,8 +1,8 @@
+"""End-to-end smoke test: start the real server and call the HTTP API."""
 from __future__ import annotations
 
 import json
 import os
-import shutil
 import socket
 import subprocess
 import sys
@@ -11,37 +11,51 @@ import time
 import unittest
 import urllib.error
 import urllib.request
+from pathlib import Path
 
-ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-
-
-def free_port():
-    with socket.socket() as s:
-        s.bind(("127.0.0.1", 0))
-        return s.getsockname()[1]
+ROOT = Path(__file__).resolve().parents[1]
 
 
-def call(method, url, body=None):
+def free_port() -> int:
+    with socket.socket() as sock:
+        sock.bind(("127.0.0.1", 0))
+        return sock.getsockname()[1]
+
+
+def call(method: str, url: str, body: dict | None = None):
     data = None if body is None else json.dumps(body).encode()
-    req = urllib.request.Request(url, data=data, method=method)
-    req.add_header("Accept", "application/json")
+    request = urllib.request.Request(url, data=data, method=method)
+    request.add_header("Accept", "application/json")
     if data is not None:
-        req.add_header("Content-Type", "application/json")
+        request.add_header("Content-Type", "application/json")
     try:
-        with urllib.request.urlopen(req, timeout=5) as r:
-            return r.status, json.loads(r.read().decode())
-    except urllib.error.HTTPError as e:
-        return e.code, json.loads(e.read().decode())
+        with urllib.request.urlopen(request, timeout=5) as response:
+            return response.status, json.loads(response.read().decode())
+    except urllib.error.HTTPError as exc:
+        return exc.code, json.loads(exc.read().decode())
 
 
 class HttpSmokeTest(unittest.TestCase):
-    def setUp(self):
-        self.tmp = tempfile.mkdtemp(prefix="cola-http-")
+    def setUp(self) -> None:
+        self.tmp = tempfile.TemporaryDirectory(prefix="cola-http-")
         self.port = free_port()
+        env = os.environ.copy()
+        env["PYTHONPATH"] = str(ROOT / "src")
         self.proc = subprocess.Popen(
-            [sys.executable, os.path.join(ROOT, "server.py"),
-             "--port", str(self.port), "--db", os.path.join(self.tmp, "notes.db")],
-            cwd=ROOT, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            [
+                sys.executable,
+                "-m",
+                "cola_skeleton.server",
+                "--port",
+                str(self.port),
+                "--db",
+                str(Path(self.tmp.name) / "notes.db"),
+            ],
+            cwd=ROOT,
+            env=env,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        )
         deadline = time.time() + 8
         while time.time() < deadline:
             try:
@@ -53,13 +67,13 @@ class HttpSmokeTest(unittest.TestCase):
         else:
             self.fail("server did not start")
 
-    def tearDown(self):
+    def tearDown(self) -> None:
         self.proc.terminate()
         try:
             self.proc.wait(timeout=5)
         except subprocess.TimeoutExpired:
             self.proc.kill()
-        shutil.rmtree(self.tmp, ignore_errors=True)
+        self.tmp.cleanup()
 
     def test_note_crud(self):
         base = f"http://127.0.0.1:{self.port}/api/v1/notes"
@@ -72,9 +86,9 @@ class HttpSmokeTest(unittest.TestCase):
         status, body = call("PATCH", base + "/" + note_id, {"title": "Changed"})
         self.assertEqual(status, 200)
         self.assertEqual(body["data"]["title"], "Changed")
-        status, body = call("DELETE", base + "/" + note_id)
+        status, _ = call("DELETE", base + "/" + note_id)
         self.assertEqual(status, 200)
-        status, body = call("GET", base + "/" + note_id)
+        status, _ = call("GET", base + "/" + note_id)
         self.assertEqual(status, 404)
 
 

@@ -1,31 +1,32 @@
+"""Application tests use a fake port, not a real database."""
 from __future__ import annotations
 
 import unittest
 
-from application.use_cases import NoteService
-from common.errors import DemoError
-from domain.model import Note
+from cola_skeleton.application.use_cases import NoteService
+from cola_skeleton.common.errors import DemoError
+from cola_skeleton.domain.model import Note
 
 
 class FakeRepo:
-    def __init__(self):
+    def __init__(self) -> None:
         self.items: dict[str, Note] = {}
 
-    def save(self, note):
+    def save(self, note: Note) -> None:
         self.items[note.id] = note
 
-    def get(self, note_id):
+    def get(self, note_id: str) -> Note | None:
         return self.items.get(note_id)
 
-    def list(self):
+    def list(self) -> list[Note]:
         return list(self.items.values())
 
-    def delete(self, note_id):
+    def delete(self, note_id: str) -> bool:
         return self.items.pop(note_id, None) is not None
 
 
 class NoteServiceTest(unittest.TestCase):
-    def setUp(self):
+    def setUp(self) -> None:
         self.service = NoteService(FakeRepo())
 
     def test_create_requires_title(self):
@@ -43,6 +44,12 @@ class NoteServiceTest(unittest.TestCase):
         with self.assertRaises(DemoError) as ctx:
             self.service.get(note.id)
         self.assertEqual(ctx.exception.http, 404)
+
+    def test_list_clamps_pagination(self):
+        for index in range(3):
+            self.service.create(f"Note {index}")
+        self.assertEqual(len(self.service.list(limit=2, offset=0)), 2)
+        self.assertEqual(len(self.service.list(limit=999, offset=0)), 3)
 
 
 if __name__ == "__main__":

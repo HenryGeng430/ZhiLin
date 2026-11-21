@@ -6,14 +6,15 @@ from dataclasses import asdict
 from datetime import datetime, timezone
 from typing import Any
 
-from application.use_cases import NoteService
-from common.errors import DemoError
-from common.result import err, ok
+from cola_skeleton.application.use_cases import NoteService
+from cola_skeleton.common.errors import DemoError
+from cola_skeleton.common.result import err, ok
+from cola_skeleton.domain.model import Note
 
 NOTE_ITEM = re.compile(r"^/api/v1/notes/([^/]+)$")
 
 
-def _dto(note) -> dict[str, Any]:
+def _dto(note: Note) -> dict[str, Any]:
     data = asdict(note)
     return {
         "id": data["id"],

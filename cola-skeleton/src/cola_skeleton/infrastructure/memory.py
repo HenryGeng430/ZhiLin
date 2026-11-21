@@ -1,7 +1,7 @@
 """In-memory adapter implementing the domain port."""
 from __future__ import annotations
 
-from domain.model import Note
+from cola_skeleton.domain.model import Note
 
 
 class InMemoryNoteRepository:

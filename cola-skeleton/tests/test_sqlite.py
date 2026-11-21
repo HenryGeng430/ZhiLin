@@ -1,21 +1,21 @@
+"""SQLite adapter tests use a temporary database."""
 from __future__ import annotations
 
-import os
 import tempfile
 import unittest
+from pathlib import Path
 
-from domain.model import Note
-from infrastructure.sqlite import SqliteNoteRepository
+from cola_skeleton.domain.model import Note
+from cola_skeleton.infrastructure.sqlite import SqliteNoteRepository
 
 
 class SqliteRepositoryTest(unittest.TestCase):
-    def setUp(self):
-        self.tmp = tempfile.mkdtemp(prefix="cola-sqlite-")
-        self.repo = SqliteNoteRepository(os.path.join(self.tmp, "notes.db"))
+    def setUp(self) -> None:
+        self.tmp = tempfile.TemporaryDirectory(prefix="cola-sqlite-")
+        self.repo = SqliteNoteRepository(Path(self.tmp.name) / "notes.db")
 
-    def tearDown(self):
-        import shutil
-        shutil.rmtree(self.tmp, ignore_errors=True)
+    def tearDown(self) -> None:
+        self.tmp.cleanup()
 
     def test_round_trip_and_update(self):
         note = Note("n1", "Title", "Body", "2026-01-01T00:00:00", "2026-01-01T00:00:00")

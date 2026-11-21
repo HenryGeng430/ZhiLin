@@ -149,11 +149,12 @@
   <section>
     <h2>5. 可运行的最小后端</h2>
     <div class="card">
-      <p><code>cola-skeleton/</code> 是公开仓库内可运行的框架示例：标准库 HTTP 服务、SQLite 适配器、
-      统一响应包络、分页/CRUD、依赖方向测试和 HTTP 冒烟测试。示例领域为通用 Note，
+      <p><code>cola-skeleton/</code> 是公开仓库内可运行的框架示例：标准 <code>src/</code> 布局、
+      <code>pyproject.toml</code>、标准库 HTTP 服务、SQLite 适配器、统一响应包络、分页/CRUD、
+      依赖方向测试、HTTP 冒烟测试、GitHub Actions CI 和 Dockerfile。示例领域为通用 Note，
       <b>不包含知林的账号、建库、AI、题库、计划、额度或管理员业务</b>。</p>
       <div class="flow">
-        <span>python server.py --port 8098</span><b>→</b><span>SQLite CRUD</span>
+        <span>python -m cola_skeleton.server</span><b>→</b><span>SQLite CRUD</span>
         <b>→</b><span>tests/test_http_smoke.py</span>
       </div>
     </div>

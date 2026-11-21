@@ -1,9 +1,9 @@
 """Small composition root: infrastructure is wired at the edge."""
 from __future__ import annotations
 
-from adapter.http import make_router
-from application.use_cases import NoteService
-from infrastructure.memory import InMemoryNoteRepository
+from cola_skeleton.adapter.http import make_router
+from cola_skeleton.application.use_cases import NoteService
+from cola_skeleton.infrastructure.memory import InMemoryNoteRepository
 
 
 def main() -> None:
