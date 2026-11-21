@@ -4,6 +4,8 @@
 
 在线预览：<https://henrygeng430.github.io/ZhiLin/>
 
+架构概览（公开版，最小披露）：<https://henrygeng430.github.io/ZhiLin/architecture.html>
+
 ## 能做什么
 
 - 导入完整产品导出的私有数据库 JSON
@@ -20,7 +22,7 @@
 本仓库**不包含**：
 
 - 登录、账号、会话或权限系统
-- AI 模型、知乎直达或任何联网问答
+- AI 模型、知乎直答或任何联网问答
 - 资料解析、建库、知识树生成或增量更新
 - 习题生成、作答、判题或复习
 - 学习计划、今日安排或计时
@@ -29,6 +31,22 @@
 - 后端服务、数据库、部署脚本或产品文档
 
 所有页面中的相关入口只保留页面壳，并明确标记为未包含。本仓库不能用于复现完整产品。
+
+## 架构说明
+
+本仓库的 `architecture.html` 展示了 COLA Edition 的公开架构：
+分层与依赖方向、请求链路、核心切片的职责边界、质量门禁与渐进式迁移策略。
+页面只包含框架级说明和示意代码，不包含账号、建库、AI、题库、计划、管理员等业务核心实现。
+
+`cola-skeleton/` 是一个可运行的公开最小后端：领域端口、应用用例、内存/SQLite 适配器、
+标准库 HTTP 服务、统一响应包络、CRUD、分页、依赖方向测试和 HTTP 冒烟测试。
+示例领域为通用 Note，不包含知林的账号、建库、AI、题库、计划、额度或管理员业务。
+
+```bash
+cd cola-skeleton
+python server.py --port 8098 --db ./notes.db
+PYTHONPATH=. python -m unittest discover -s tests -v
+```
 
 ## 本地运行
 

@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="description" content="知林 COLA Edition 架构概览：分层、依赖方向、请求链路与迁移策略。">
+<title>知林 COLA Edition · 架构概览</title>
+<style>
+  :root {
+    --ink:#1f2a26; --ink2:#55635d; --ink3:#7d8b85; --line:#e4e1d8;
+    --bg:#f6f4ee; --card:#fff; --brand:#2f7d73; --brand2:#1f5c55;
+    --soft:#e8f3f0; --gold:#b8860b; --code:#22312c;
+  }
+  * { box-sizing:border-box; }
+  body {
+    margin:0; background:var(--bg); color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;
+    line-height:1.7;
+  }
+  header {
+    background:linear-gradient(135deg,#1f5c55,#2f7d73 55%,#5c8f7f);
+    color:#fff; padding:48px 24px 42px;
+  }
+  .wrap { max-width:1080px; margin:0 auto; }
+  header h1 { margin:0 0 8px; font-size:32px; letter-spacing:.5px; }
+  header p { margin:0; max-width:760px; color:#dceee9; font-size:14px; }
+  .badge {
+    display:inline-block; margin-bottom:14px; padding:3px 9px; border:1px solid rgba(255,255,255,.35);
+    border-radius:999px; font-size:11px; letter-spacing:1.4px; color:#e8f7f3;
+  }
+  main { max-width:1080px; margin:0 auto; padding:30px 22px 70px; }
+  section { margin:0 0 30px; }
+  h2 { font-size:21px; margin:0 0 12px; }
+  h3 { font-size:15px; margin:0 0 6px; }
+  p { color:var(--ink2); font-size:14px; }
+  .grid { display:grid; gap:14px; }
+  .g2 { grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); }
+  .g3 { grid-template-columns:repeat(auto-fit,minmax(210px,1fr)); }
+  .card {
+    background:var(--card); border:1px solid var(--line); border-radius:14px;
+    padding:18px 18px 16px; box-shadow:0 6px 20px rgba(36,49,45,.04);
+  }
+  .card p { margin:6px 0 0; font-size:12.8px; }
+  .layer { position:relative; padding-left:18px; }
+  .layer::before {
+    content:""; position:absolute; left:0; top:5px; bottom:5px; width:4px;
+    border-radius:4px; background:var(--brand);
+  }
+  .layer.outer::before { background:#c2683c; }
+  .layer.domain::before { background:var(--gold); }
+  .layer.infra::before { background:#3a72b8; }
+  .flow { display:flex; flex-wrap:wrap; gap:8px; align-items:center; margin:10px 0 0; }
+  .flow span {
+    background:#fff; border:1px solid var(--line); border-radius:999px;
+    padding:5px 10px; font-size:12px; color:var(--ink2);
+  }
+  .flow b { color:var(--brand2); font-size:13px; }
+  table { width:100%; border-collapse:collapse; background:#fff; border:1px solid var(--line); border-radius:12px; overflow:hidden; }
+  th,td { text-align:left; padding:10px 12px; border-bottom:1px solid var(--line); font-size:13px; vertical-align:top; }
+  th { background:#f0f6f3; color:var(--brand2); font-size:12px; letter-spacing:.4px; }
+  tr:last-child td { border-bottom:0; }
+  code,pre { font-family:"SFMono-Regular",Consolas,"Liberation Mono",monospace; }
+  code { background:#edf4f1; color:#24564f; padding:1px 5px; border-radius:5px; font-size:12.5px; }
+  pre {
+    background:var(--code); color:#dceee9; padding:16px 18px; border-radius:12px;
+    overflow:auto; font-size:12.5px; line-height:1.65;
+  }
+  pre .k { color:#f2ce63; } pre .s { color:#a8d8c8; } pre .c { color:#8fa39c; }
+  .note { background:#fbf3e0; border:1px solid #f0e0b8; color:#7a5600; border-radius:12px; padding:12px 14px; font-size:13px; }
+  .ok { color:var(--brand2); font-weight:650; }
+  footer { color:var(--ink3); font-size:12px; padding-top:20px; border-top:1px dashed var(--line); }
+  @media (max-width:560px) {
+    header { padding:34px 18px 30px; }
+    header h1 { font-size:25px; }
+    main { padding:22px 14px 50px; }
+    th,td { padding:8px; font-size:12px; }
+  }
+  @media print {
+    header { background:#fff !important; color:#111; border-bottom:2px solid #2f7d73; }
+    header p,.badge { color:#333; }
+    body { background:#fff; }
+    .card,table,pre { box-shadow:none; break-inside:avoid; }
+    a { color:#111; text-decoration:none; }
+  }
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap">
+    <div class="badge">PUBLIC ARCHITECTURE NOTE · MINIMAL DISCLOSURE</div>
+    <h1>知林 COLA Edition · 架构概览</h1>
+    <p>公开仓库只展示代码框架、分层约束与工程能力，不包含账号、建库、AI、题库、计划、管理员等业务核心实现。</p>
+  </div>
+</header>
+<main>
+  <section>
+    <h2>1. 设计目标</h2>
+    <div class="grid g2">
+      <div class="card layer outer"><h3>业务与框架解耦</h3><p>领域层只表达业务规则；HTTP、存储、外部模型与旧系统放在适配层/基础设施层。</p></div>
+      <div class="card layer"><h3>可替换适配器</h3><p>同一套用例可以接 JSON 存储、关系库或旧服务；迁移时不需要改领域规则。</p></div>
+      <div class="card layer domain"><h3>依赖倒置</h3><p>领域定义端口（Protocol/ABC），基础设施实现端口；应用层只依赖抽象。</p></div>
+      <div class="card layer infra"><h3>渐进式替换</h3><p>新路由优先匹配，未迁移的路径落到旧服务，保证迁移期间产品持续可用。</p></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>2. 分层与依赖方向</h2>
+    <div class="grid g3">
+      <div class="card layer outer"><h3>Adapter</h3><p>HTTP Controller、参数校验、响应包络、会话上下文。</p></div>
+      <div class="card layer"><h3>Application</h3><p>用例编排、事务边界、权限与幂等；只依赖领域端口。</p></div>
+      <div class="card layer domain"><h3>Domain</h3><p>实体、值对象、策略、领域错误；不依赖 HTTP/数据库/旧系统。</p></div>
+      <div class="card layer infra"><h3>Infrastructure</h3><p>Repository 实现、外部网关、旧系统防腐层、持久化。</p></div>
+      <div class="card layer"><h3>Client</h3><p>稳定的 DTO/契约，避免把内部模型直接暴露给前端。</p></div>
+      <div class="card layer"><h3>Boot</h3><p>组合根：装配实现、注册路由、启动服务。</p></div>
+    </div>
+    <div class="flow">
+      <span>Adapter</span><b>→</b><span>Application</span><b>→</b><span>Domain</span>
+      <b>←</b><span>Infrastructure implements ports</span>
+    </div>
+    <p style="margin-top:10px">硬规则：<code>domain</code> 不导入 <code>adapter/application/infrastructure</code>；<code>application</code> 不导入 <code>adapter/infrastructure</code>；基础设施可以依赖领域端口，但不能反向污染领域。</p>
+  </section>
+
+  <section>
+    <h2>3. 请求链路</h2>
+    <div class="card">
+      <div class="flow">
+        <span>Browser</span><b>→</b><span>HTTP Adapter</span><b>→</b><span>Use Case</span>
+        <b>→</b><span>Domain Policy</span><b>→</b><span>Repository Port</span>
+        <b>→</b><span>JSON / Legacy Adapter</span>
+      </div>
+      <p style="margin-top:12px">适配层负责把外部输入转换为用例参数；用例负责编排；领域策略负责规则判断；基础设施负责持久化或调用旧系统。错误通过稳定错误码返回，响应统一为 <code>{code,message,data,traceId}</code>。</p>
+    </div>
+  </section>
+
+  <section>
+    <h2>4. 核心切片（公开版仅描述职责）</h2>
+    <table>
+      <thead><tr><th>切片</th><th>领域职责</th><th>公开披露</th></tr></thead>
+      <tbody>
+        <tr><td>Account</td><td>账号资料、昵称策略、会话边界</td><td>仅展示端口与策略接口</td></tr>
+        <tr><td>Mastery</td><td>熟练度、有效值、复习阈值、颜色策略</td><td>仅展示值对象与策略签名</td></tr>
+        <tr><td>Quota</td><td>角色额度、每日重置、超限错误</td><td>仅展示策略接口与错误类型</td></tr>
+        <tr><td>Runtime</td><td>服务时间、缩容窗口、公开状态</td><td>仅展示运行时 DTO</td></tr>
+        <tr><td>Course/Source</td><td>课程目录、资料元数据、来源引用</td><td>仅展示查询端口</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section>
+    <h2>5. 可运行的最小后端</h2>
+    <div class="card">
+      <p><code>cola-skeleton/</code> 是公开仓库内可运行的框架示例：标准库 HTTP 服务、SQLite 适配器、
+      统一响应包络、分页/CRUD、依赖方向测试和 HTTP 冒烟测试。示例领域为通用 Note，
+      <b>不包含知林的账号、建库、AI、题库、计划、额度或管理员业务</b>。</p>
+      <div class="flow">
+        <span>python server.py --port 8098</span><b>→</b><span>SQLite CRUD</span>
+        <b>→</b><span>tests/test_http_smoke.py</span>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>6. 代码骨架（示意）</h2>
+    <pre><span class="c"># domain/ports.py</span>
+<span class="k">class</span> MasteryRepository(Protocol):
+    <span class="k">def</span> get_state(self, node_id: str) -&gt; MasteryState: ...
+    <span class="k">def</span> save_state(self, node_id: str, state: MasteryState) -&gt; <span class="k">None</span>: ...
+
+<span class="c"># application/use_cases.py</span>
+<span class="k">class</span> SetProficiency:
+    <span class="k">def</span> __init__(self, repo: MasteryRepository): self.repo = repo
+    <span class="k">def</span> execute(self, node_id: str, value: int) -&gt; MasteryState:
+        state = self.repo.get_state(node_id)
+        state.mastery = normalize_proficiency(value)
+        self.repo.save_state(node_id, state)
+        <span class="k">return</span> state
+
+<span class="c"># adapter/http/controller.py</span>
+<span class="k">@route</span>(<span class="s">"POST"</span>, <span class="s">"/api/v2/nodes/{nid}/proficiency"</span>)
+<span class="k">def</span> set_proficiency(ctx):
+    state = service.set_proficiency(ctx[<span class="s">"params"</span>][<span class="s">"nid"</span>], ctx[<span class="s">"body"</span>][<span class="s">"value"</span>])
+    <span class="k">return</span> ok(state.to_dict())</pre>
+  </section>
+
+  <section>
+    <h2>7. 质量门禁</h2>
+    <div class="grid g2">
+      <div class="card"><h3>依赖方向测试</h3><p>用 AST 扫描 import，发现领域层导入 HTTP/基础设施即失败。</p></div>
+      <div class="card"><h3>领域单测</h3><p>纯函数/策略测试，不启动服务、不连数据库。</p></div>
+      <div class="card"><h3>用例测试</h3><p>用内存 Fake Repository 验证编排、错误与边界。</p></div>
+      <div class="card"><h3>兼容性冒烟</h3><p>新路由优先匹配，旧路径回退；关键响应包络保持一致。</p></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>8. 渐进式迁移</h2>
+    <table>
+      <thead><tr><th>阶段</th><th>动作</th><th>退出条件</th></tr></thead>
+      <tbody>
+        <tr><td>P0</td><td>建立分层、端口、组合根与依赖测试</td><td>领域/应用层无外部依赖</td></tr>
+        <tr><td>P1</td><td>迁移账号、额度、运行状态等低耦合切片</td><td>v1 兼容路由通过冒烟</td></tr>
+        <tr><td>P2</td><td>迁移熟练度读写与课程查询</td><td>领域测试 + 页面回归通过</td></tr>
+        <tr><td>P3</td><td>迁移建库、题库、计划、AI 网关</td><td>端到端闭环通过</td></tr>
+        <tr><td>P4</td><td>下线旧路由与旧模块</td><td>回滚演练通过</td></tr>
+      </tbody>
+    </table>
+    <div class="note" style="margin-top:12px">公开仓库只展示框架与最小示例；完整业务规则、数据模型、提示词、额度策略和部署细节保留在私有仓库。</div>
+  </section>
+
+  <footer>知林 ZhiLin · COLA Edition · 公开架构说明 · 不包含可复现的完整业务实现</footer>
+</main>
+</body>
+</html>

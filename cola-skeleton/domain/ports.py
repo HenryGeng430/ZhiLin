@@ -1,0 +1,13 @@
+"""Domain ports implemented by infrastructure adapters."""
+from __future__ import annotations
+
+from typing import Protocol
+
+from domain.model import Note
+
+
+class NoteRepository(Protocol):
+    def save(self, note: Note) -> None: ...
+    def get(self, note_id: str) -> Note | None: ...
+    def list(self) -> list[Note]: ...
+    def delete(self, note_id: str) -> bool: ...
